@@ -1,8 +1,10 @@
 import {createApp} from 'vue'
-import './style.css'
 import App from './App.vue'
 import router from './router/router.ts';
 import storage from './shared/plugins/storage.ts';
+
+import './assets/main.scss';
+
 
 createApp(App)
     .use(router)
