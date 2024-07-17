@@ -2,6 +2,9 @@
 import {inject, onMounted, ref} from "vue";
 import {useRouter} from "vue-router";
 import {IStorage} from "../../shared/plugins/interface/istorage.ts";
+import {app, auth} from "../../shared/services/firebase.ts";
+import {getAuth, RecaptchaVerifier, signInWithPhoneNumber} from "firebase/auth";
+
 
 const countries = ref('PE');
 const code = ref('+ 51');
@@ -9,6 +12,10 @@ const code = ref('+ 51');
 const phone = ref('');
 
 const country_flag = ref('🇵🇪');
+
+const dialog = ref(false);
+
+const authCode = ref('');
 
 const router = useRouter();
 const storage = inject<IStorage>('storage');
@@ -27,14 +34,56 @@ const updateCountry = async (): Promise<void> => {
 
 onMounted(() => {
   updateCountry();
+  window.recaptchaVerifier = new RecaptchaVerifier(auth, 'p-captcha', {
+    'size': 'invisible',
+    'callback': (response) => {
+    }
+  });
 });
 
 const login = async (): Promise<void> => {
-  console.log('login');
+  const phoneNumber = `${code.value}${phone.value}`;
+
+  if (phoneNumber.length < 10) {
+    return;
+  }
+
+  const appVerifier = window.recaptchaVerifier;
+
+  const auth = getAuth();
+  signInWithPhoneNumber(auth, phoneNumber, appVerifier)
+      .then((confirmationResult) => {
+        // SMS sent. Prompt user to type the code from the message, then sign the
+        // user in with confirmationResult.confirm(code).
+        window.confirmationResult = confirmationResult;
+        dialog.value = true;
+        // ...
+      }).catch((error) => {
+    alert('Invalid Phone Number');
+  });
+};
+
+const loginWithCode = async (): Promise<void> => {
+  dialog.value = false;
+  const code = authCode.value;
+  const confirmationResult = window.confirmationResult;
+  confirmationResult.confirm(code)
+      .then((result) => {
+        console.log(result);
+        // User signed in successfully.
+        const user = result.user;
+        console.log(user);
+        storage?.setItem('token', user.refreshToken);
+        // storage?.set('user', user);
+        router.push({name: 'home'});
+      }).catch((error) => {
+        alert('Invalid code');
+  });
 };
 </script>
 
 <template>
+
   <div class="login_container">
     <div class="login_img_container">
       <div class="image"></div>
@@ -73,10 +122,62 @@ const login = async (): Promise<void> => {
       <div id="p-captcha"/>
       <button id="sign" class="next" @click="login">Sign in</button>
     </div>
+
+    <v-dialog
+        v-model="dialog"
+        max-width="400"
+        persistent
+    >
+      <div class="enter_code_login_container">
+        <p>
+          Enter the code sent to your phone
+        </p>
+        <input type="number" v-model="authCode">
+        <button @click="loginWithCode">Confirm</button>
+      </div>
+    </v-dialog>
   </div>
 </template>
 
 <style lang="scss" scoped>
+
+.enter_code_login_container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #192632;
+  border-radius: 7px;
+  padding: 20px;
+
+  p {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: white;
+  }
+
+  input {
+    width: 50%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: none;
+    outline: none;
+    border-radius: 7px;
+  }
+
+  button {
+    width: 50%;
+    padding: 10px;
+    border: none;
+    background: #2EA6DA;
+    color: #FFF;
+    outline: none;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+
+}
+
 .login_container {
   background: #212121;
   height: 100vh;
@@ -129,7 +230,6 @@ const login = async (): Promise<void> => {
     align-items: center;
     justify-content: center;
     padding-top: 15px;
-
 
 
     select {

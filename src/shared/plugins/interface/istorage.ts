@@ -1,4 +1,4 @@
-export interface IStorage {
+interface IStorage {
     setItem(key: string, value: any): void;
 
     getItem(key: string): any;
@@ -7,3 +7,5 @@ export interface IStorage {
 
     clear(): void;
 }
+
+export {IStorage};

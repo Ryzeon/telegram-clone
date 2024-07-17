@@ -1,5 +1,5 @@
 import {App} from "vue";
-import {IStorage} from '/interface/istorage.ts';
+import {IStorage} from '/interface/istorage';
 
 export default {
     install: (app: App) => {
