@@ -2,8 +2,9 @@
 import {inject, onMounted, ref} from "vue";
 import {useRouter} from "vue-router";
 import {IStorage} from "../../shared/plugins/interface/istorage.ts";
-import {app, auth} from "../../shared/services/firebase.ts";
+import {auth} from "../../shared/services/firebase.ts";
 import {getAuth, RecaptchaVerifier, signInWithPhoneNumber} from "firebase/auth";
+import {useStore} from "vuex";
 
 
 const countries = ref('PE');
@@ -19,6 +20,8 @@ const authCode = ref('');
 
 const router = useRouter();
 const storage = inject<IStorage>('storage');
+
+const store = useStore();
 
 const updateCountry = async (): Promise<void> => {
   try {
@@ -36,7 +39,7 @@ onMounted(() => {
   updateCountry();
   window.recaptchaVerifier = new RecaptchaVerifier(auth, 'p-captcha', {
     'size': 'invisible',
-    'callback': (response) => {
+    'callback': () => {
     }
   });
 });
@@ -58,7 +61,7 @@ const login = async (): Promise<void> => {
         window.confirmationResult = confirmationResult;
         dialog.value = true;
         // ...
-      }).catch((error) => {
+      }).catch(() => {
     alert('Invalid Phone Number');
   });
 };
@@ -68,15 +71,15 @@ const loginWithCode = async (): Promise<void> => {
   const code = authCode.value;
   const confirmationResult = window.confirmationResult;
   confirmationResult.confirm(code)
-      .then((result) => {
-        console.log(result);
-        // User signed in successfully.
+      .then((result: any) => {
         const user = result.user;
-        console.log(user);
+        let phoneNumber = user.phoneNumber;
+        phoneNumber = phoneNumber.replace('+', '');
         storage?.setItem('token', user.refreshToken);
-        // storage?.set('user', user);
+        store.commit('setLogged', phoneNumber);
         router.push({name: 'home'});
       }).catch((error) => {
+        console.log(error);
         alert('Invalid code');
   });
 };

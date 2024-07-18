@@ -20,8 +20,6 @@ const firebaseConfig: IFirebase = {
     measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-console.log(firebaseConfig);
-
 declare global {
     interface Window {
         recaptchaVerifier: any,

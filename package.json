@@ -12,7 +12,9 @@
     "firebase": "^10.12.3",
     "vue": "^3.4.29",
     "vue-router": "^4.4.0",
-    "vuetify": "^3.6.13"
+    "vue3-emoji-picker": "^1.1.8",
+    "vuetify": "^3.6.13",
+    "vuex": "^4.0.2"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
